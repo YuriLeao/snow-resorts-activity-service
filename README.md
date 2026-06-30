@@ -2,10 +2,10 @@
 
 Activity microservice for Snow Resorts: descent tracking (start/points/finish), run
 metrics (max/avg speed, distance, vertical drop, inclination, duration), history, map
-replay and friend leaderboards. Publishes `RunCompletedEvent`.
+replay and friend leaderboards. Publishes `RunCompletedEvent` to SNS (prod) or logs locally (dev).
 
 - **Port:** 8085
-- **DB schema:** `activity`
+- **DB schema:** `activity` (`runs`, `run_metrics`, `gps_points`)
 - **Shared libs:** `com.snowresorts:security-lib` + `com.snowresorts:contracts` (from GitHub Packages)
 
 ## Build & test
