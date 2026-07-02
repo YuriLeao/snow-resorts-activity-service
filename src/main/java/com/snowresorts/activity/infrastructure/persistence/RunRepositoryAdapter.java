@@ -35,9 +35,14 @@ public class RunRepositoryAdapter implements Runs {
     }
 
     @Override
-    public Runs.Page findHistory(UUID userId, LocalDate date, UUID resortId, int page, int size) {
+    public void deleteById(UUID id) {
+        jpaRepository.deleteById(id);
+    }
+
+    @Override
+    public List<Run> findHistory(UUID userId, LocalDate date, UUID resortId, int page, int size) {
         Pageable pageable = PageRequest.of(Math.max(page, 0), size <= 0 ? 20 : size);
-        org.springframework.data.domain.Page<RunEntity> result;
+        org.springframework.data.domain.Slice<RunEntity> result;
         if (date != null) {
             Instant from = date.atStartOfDay(ZoneOffset.UTC).toInstant();
             Instant to = date.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();
@@ -51,8 +56,7 @@ public class RunRepositoryAdapter implements Runs {
         } else {
             result = jpaRepository.findByUserIdOrderByStartedAtDesc(userId, pageable);
         }
-        List<Run> content = result.getContent().stream().map(this::toDomain).toList();
-        return new Runs.Page(content, result.getTotalElements(), result.getNumber(), result.getSize());
+        return result.getContent().stream().map(this::toDomain).toList();
     }
 
     @Override

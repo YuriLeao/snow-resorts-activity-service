@@ -22,8 +22,7 @@ public record TrackPointDto(
         Double lng,
 
         Double altitude,
-        Double speedKmh,
-        Double inclination) {
+        Double speedKmh) {
 
     public TrackPoint toDomain() {
         return new TrackPoint(recordedAt, lat, lng, altitude, speedKmh);

@@ -33,14 +33,11 @@ public class GpsPointEntity {
     @Column(name = "speed_kmh")
     private Double speedKmh;
 
-    @Column
-    private Double inclination;
-
     protected GpsPointEntity() {
     }
 
     public GpsPointEntity(UUID runId, Instant recordedAt, double lat, double lng,
-                          Double altitude, Double speedKmh, Double inclination) {
+                          Double altitude, Double speedKmh) {
         this.id = UUID.randomUUID();
         this.runId = runId;
         this.recordedAt = recordedAt;
@@ -48,7 +45,6 @@ public class GpsPointEntity {
         this.lng = lng;
         this.altitude = altitude;
         this.speedKmh = speedKmh;
-        this.inclination = inclination;
     }
 
     public UUID getId() {
@@ -77,9 +73,5 @@ public class GpsPointEntity {
 
     public Double getSpeedKmh() {
         return speedKmh;
-    }
-
-    public Double getInclination() {
-        return inclination;
     }
 }

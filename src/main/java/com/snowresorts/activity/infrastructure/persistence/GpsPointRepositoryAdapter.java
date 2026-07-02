@@ -17,10 +17,8 @@ public class GpsPointRepositoryAdapter implements GpsPoints {
 
     @Override
     public void appendAll(UUID runId, List<TrackPoint> points) {
-        // Domain TrackPoint carries no inclination; it is derived in metrics, so stored as null here.
         List<GpsPointEntity> entities = points.stream()
-                .map(p -> new GpsPointEntity(
-                        runId, p.recordedAt(), p.lat(), p.lng(), p.altitude(), p.speedKmh(), null))
+                .map(p -> new GpsPointEntity(runId, p.recordedAt(), p.lat(), p.lng(), p.altitude(), p.speedKmh()))
                 .toList();
         jpaRepository.saveAll(entities);
     }

@@ -93,6 +93,14 @@ public class RunTrackingService {
         return metrics;
     }
 
+    /** Deletes a run owned by the caller (ACTIVE or COMPLETED). Child rows cascade in the DB. */
+    @Transactional
+    public void delete(UUID runId, UUID userId) {
+        loadOwned(runId, userId);
+        runs.deleteById(runId);
+        log.debug("Deleted run {} for user {}", runId, userId);
+    }
+
     private Run loadOwned(UUID runId, UUID userId) {
         Run run = runs.findById(runId)
                 .orElseThrow(() -> ResourceNotFoundException.of("Run", runId));

@@ -30,11 +30,10 @@ public class RunQueryService {
     }
 
     public RunHistoryPage history(UUID userId, LocalDate date, UUID resortId, int page, int size) {
-        Runs.Page result = runs.findHistory(userId, date, resortId, page, size);
-        List<RunWithMetrics> content = result.content().stream()
+        List<RunWithMetrics> content = runs.findHistory(userId, date, resortId, page, size).stream()
                 .map(run -> new RunWithMetrics(run, metricsOrZero(run.id())))
                 .toList();
-        return new RunHistoryPage(content, result.totalElements(), result.page(), result.size());
+        return new RunHistoryPage(content);
     }
 
     public RunWithMetrics detail(UUID runId, UUID userId) {
@@ -43,7 +42,7 @@ public class RunQueryService {
     }
 
     /** @return the run's stored GPS points (ordered), for client-side polyline/GeoJSON rendering. */
-    public List<TrackPoint> replay(UUID runId, UUID userId) {
+    public List<TrackPoint> trackPoints(UUID runId, UUID userId) {
         loadOwned(runId, userId);
         return gpsPoints.findByRunId(runId);
     }
@@ -64,6 +63,6 @@ public class RunQueryService {
     public record RunWithMetrics(Run run, RunMetrics metrics) {
     }
 
-    public record RunHistoryPage(List<RunWithMetrics> content, long totalElements, int page, int size) {
+    public record RunHistoryPage(List<RunWithMetrics> content) {
     }
 }

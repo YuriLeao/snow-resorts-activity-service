@@ -12,14 +12,12 @@ public record RunDetailResponse(
         Instant startedAt,
         Instant endedAt,
         String status,
-        RunMetricsResponse metrics,
-        String replayUrl) {
+        RunMetricsResponse metrics) {
 
     public static RunDetailResponse from(RunWithMetrics rwm) {
         var run = rwm.run();
         return new RunDetailResponse(run.id(), run.userId(), run.resortId(), run.trailId(),
                 run.startedAt(), run.endedAt(), run.status().name(),
-                RunMetricsResponse.from(rwm.metrics()),
-                "/snow-resort-service/v1/runs/%s/replay".formatted(run.id()));
+                RunMetricsResponse.from(rwm.metrics()));
     }
 }

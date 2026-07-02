@@ -13,6 +13,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -94,6 +95,13 @@ public class RunController {
     @GetMapping("/{id}/replay")
     public ReplayResponse replay(@PathVariable UUID id) {
         UUID userId = SecurityUtils.requireCurrentUserId();
-        return ReplayResponse.of(id, queryService.replay(id, userId));
+        return ReplayResponse.of(id, queryService.trackPoints(id, userId));
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable UUID id) {
+        UUID userId = SecurityUtils.requireCurrentUserId();
+        trackingService.delete(id, userId);
     }
 }

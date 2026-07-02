@@ -4,22 +4,22 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface RunJpaRepository extends JpaRepository<RunEntity, UUID> {
 
-    Page<RunEntity> findByUserIdOrderByStartedAtDesc(UUID userId, Pageable pageable);
+    Slice<RunEntity> findByUserIdOrderByStartedAtDesc(UUID userId, Pageable pageable);
 
-    Page<RunEntity> findByUserIdAndResortIdOrderByStartedAtDesc(UUID userId, UUID resortId, Pageable pageable);
+    Slice<RunEntity> findByUserIdAndResortIdOrderByStartedAtDesc(UUID userId, UUID resortId, Pageable pageable);
 
-    Page<RunEntity> findByUserIdAndStartedAtBetweenOrderByStartedAtDesc(
+    Slice<RunEntity> findByUserIdAndStartedAtBetweenOrderByStartedAtDesc(
             UUID userId, Instant from, Instant to, Pageable pageable);
 
-    Page<RunEntity> findByUserIdAndResortIdAndStartedAtBetweenOrderByStartedAtDesc(
+    Slice<RunEntity> findByUserIdAndResortIdAndStartedAtBetweenOrderByStartedAtDesc(
             UUID userId, UUID resortId, Instant from, Instant to, Pageable pageable);
 
     @Query(value = """
