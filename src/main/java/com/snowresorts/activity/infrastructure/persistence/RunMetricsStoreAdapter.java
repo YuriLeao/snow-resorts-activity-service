@@ -19,8 +19,8 @@ public class RunMetricsStoreAdapter implements RunMetricsStore {
     public void save(UUID runId, RunMetrics metrics) {
         jpaRepository.save(new RunMetricsEntity(
                 runId, metrics.maxSpeedKmh(), metrics.avgSpeedKmh(), metrics.distanceM(),
-                metrics.verticalDropM(), metrics.maxInclinationDeg(), metrics.avgInclinationDeg(),
-                metrics.durationSec()));
+                metrics.maxAltitudeM(), metrics.verticalDropM(), metrics.maxInclinationDeg(),
+                metrics.avgInclinationDeg(), metrics.durationSec()));
     }
 
     @Override
@@ -30,7 +30,7 @@ public class RunMetricsStoreAdapter implements RunMetricsStore {
 
     private RunMetrics toDomain(RunMetricsEntity e) {
         return new RunMetrics(e.getMaxSpeedKmh(), e.getAvgSpeedKmh(), e.getDistanceM(),
-                e.getVerticalDropM(), e.getMaxInclinationDeg(), e.getAvgInclinationDeg(),
-                e.getDurationSec());
+                e.getMaxAltitudeM(), e.getVerticalDropM(), e.getMaxInclinationDeg(),
+                e.getAvgInclinationDeg(), e.getDurationSec());
     }
 }

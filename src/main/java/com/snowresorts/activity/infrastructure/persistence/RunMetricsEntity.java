@@ -23,6 +23,9 @@ public class RunMetricsEntity {
     @Column(name = "distance_m", nullable = false)
     private double distanceM;
 
+    @Column(name = "max_altitude_m", nullable = false)
+    private double maxAltitudeM;
+
     @Column(name = "vertical_drop_m", nullable = false)
     private double verticalDropM;
 
@@ -39,12 +42,13 @@ public class RunMetricsEntity {
     }
 
     public RunMetricsEntity(UUID runId, double maxSpeedKmh, double avgSpeedKmh, double distanceM,
-                            double verticalDropM, double maxInclinationDeg, double avgInclinationDeg,
-                            long durationSec) {
+                            double maxAltitudeM, double verticalDropM, double maxInclinationDeg,
+                            double avgInclinationDeg, long durationSec) {
         this.runId = runId;
         this.maxSpeedKmh = maxSpeedKmh;
         this.avgSpeedKmh = avgSpeedKmh;
         this.distanceM = distanceM;
+        this.maxAltitudeM = maxAltitudeM;
         this.verticalDropM = verticalDropM;
         this.maxInclinationDeg = maxInclinationDeg;
         this.avgInclinationDeg = avgInclinationDeg;
@@ -65,6 +69,10 @@ public class RunMetricsEntity {
 
     public double getDistanceM() {
         return distanceM;
+    }
+
+    public double getMaxAltitudeM() {
+        return maxAltitudeM;
     }
 
     public double getVerticalDropM() {

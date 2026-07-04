@@ -14,9 +14,9 @@ import java.util.List;
  * exceeds {@value #MAX_SPEED_KMH} km/h OR the jump distance exceeds {@value #MAX_JUMP_M} m. The
  * previously accepted point stays as the anchor, so a single outlier cannot drag the whole track.
  *
- * <p><b>Vertical drop.</b> Computed as {@code firstAltitude - lastAltitude} over points that carry
- * an altitude (per the plan's {@code start_altitude - end_altitude}). An uphill net result is
- * clamped to {@code 0} — a descent never has a negative drop.
+ * <p><b>Altitude.</b> {@code maxAltitudeM} is the highest sample with altitude data.
+ * {@code verticalDropM} is {@code max(altitude) - min(altitude)} over the same samples — the
+ * vertical range experienced during the run, regardless of net uphill/downhill order.
  *
  * <p><b>Inclination.</b> Per segment {@code atan2(deltaAltitude, horizontalDistance)} in degrees;
  * only segments with a positive horizontal distance and altitudes on both ends are considered.
@@ -96,11 +96,34 @@ public class MetricsCalculator {
 
         double maxSpeedKmh = maxReportedSpeed(points).orElse(maxSegmentSpeedKmh);
         double avgSpeedKmh = durationSec > 0 ? (distanceM / durationSec) * 3.6 : 0.0;
-        double verticalDropM = verticalDrop(points);
+        AltitudeStats altitudeStats = altitudeStats(points);
         double avgInclinationDeg = inclinationSegments > 0 ? inclinationSum / inclinationSegments : 0.0;
 
-        return new RunMetrics(maxSpeedKmh, avgSpeedKmh, distanceM, verticalDropM,
-                maxInclinationDeg, avgInclinationDeg, durationSec);
+        return new RunMetrics(maxSpeedKmh, avgSpeedKmh, distanceM, altitudeStats.maxAltitudeM(),
+                altitudeStats.verticalDropM(), maxInclinationDeg, avgInclinationDeg, durationSec);
+    }
+
+    private record AltitudeStats(double maxAltitudeM, double verticalDropM) {
+        static AltitudeStats empty() {
+            return new AltitudeStats(0.0, 0.0);
+        }
+    }
+
+    private static AltitudeStats altitudeStats(List<TrackPoint> points) {
+        double min = Double.POSITIVE_INFINITY;
+        double max = Double.NEGATIVE_INFINITY;
+        for (TrackPoint p : points) {
+            if (p.altitude() == null) {
+                continue;
+            }
+            min = Math.min(min, p.altitude());
+            max = Math.max(max, p.altitude());
+        }
+        if (max == Double.NEGATIVE_INFINITY) {
+            return AltitudeStats.empty();
+        }
+        double verticalDropM = min == Double.POSITIVE_INFINITY || Double.compare(min, max) == 0 ? 0.0 : max - min;
+        return new AltitudeStats(max, verticalDropM);
     }
 
     private static java.util.OptionalDouble maxReportedSpeed(List<TrackPoint> points) {
@@ -109,24 +132,6 @@ public class MetricsCalculator {
                 .filter(java.util.Objects::nonNull)
                 .mapToDouble(Double::doubleValue)
                 .max();
-    }
-
-    private static double verticalDrop(List<TrackPoint> points) {
-        Double first = null;
-        Double last = null;
-        for (TrackPoint p : points) {
-            if (p.altitude() == null) {
-                continue;
-            }
-            if (first == null) {
-                first = p.altitude();
-            }
-            last = p.altitude();
-        }
-        if (first == null) {
-            return 0.0;
-        }
-        return Math.max(0.0, first - last);
     }
 
     private static double secondsBetween(TrackPoint a, TrackPoint b) {

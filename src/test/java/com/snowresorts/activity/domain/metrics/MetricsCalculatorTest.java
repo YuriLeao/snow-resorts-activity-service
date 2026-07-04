@@ -49,6 +49,7 @@ class MetricsCalculatorTest {
         assertThat(metrics.maxSpeedKmh()).isEqualTo(50.0); // max reported point speed
         assertThat(metrics.avgSpeedKmh()).isCloseTo(40.03, within(1.0));
         assertThat(metrics.verticalDropM()).isCloseTo(20.0, within(0.001));
+        assertThat(metrics.maxAltitudeM()).isCloseTo(2000.0, within(0.001));
         assertThat(metrics.maxInclinationDeg()).isCloseTo(5.14, within(0.2));
         assertThat(metrics.avgInclinationDeg()).isCloseTo(5.14, within(0.2));
     }
@@ -117,14 +118,15 @@ class MetricsCalculatorTest {
     }
 
     @Test
-    @DisplayName("calculate_uphillTrack_clampsVerticalDropToZero")
-    void calculate_uphillTrack_clampsVerticalDropToZero() {
+    @DisplayName("calculate_uphillTrack_usesMaxMinusMinVerticalRange")
+    void calculate_uphillTrack_usesMaxMinusMinVerticalRange() {
         List<TrackPoint> uphill = List.of(
                 new TrackPoint(T0, 45.000, 6.000, 1980.0, 10.0),
                 new TrackPoint(T0.plusSeconds(10), 45.001, 6.000, 2000.0, 10.0));
 
         RunMetrics metrics = calculator.calculate(uphill);
 
-        assertThat(metrics.verticalDropM()).isZero();
+        assertThat(metrics.verticalDropM()).isCloseTo(20.0, within(0.001));
+        assertThat(metrics.maxAltitudeM()).isCloseTo(2000.0, within(0.001));
     }
 }

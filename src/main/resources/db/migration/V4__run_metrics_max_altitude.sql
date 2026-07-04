@@ -1,0 +1,2 @@
+ALTER TABLE run_metrics
+    ADD COLUMN max_altitude_m DOUBLE PRECISION NOT NULL DEFAULT 0;
