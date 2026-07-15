@@ -2,6 +2,7 @@ package com.snowresorts.activity.application;
 
 import com.snowresorts.activity.domain.model.Run;
 import com.snowresorts.activity.domain.model.RunMetrics;
+import com.snowresorts.activity.domain.model.RunStatus;
 import com.snowresorts.activity.domain.model.TrackPoint;
 import com.snowresorts.activity.domain.port.GpsPoints;
 import com.snowresorts.activity.domain.port.RunMetricsStore;
@@ -14,7 +15,9 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Read side (CQRS): run history, detail and replay, always scoped to the owner (MVP IDOR rule). */
+/** Read side (CQRS): run history, detail and replay. Own ACTIVE runs stay private; COMPLETED
+ * runs are readable by any authenticated caller so friends can open a descent from the
+ * friends screen (MVP — same trust model as leaderboard {@code friendIds}). */
 @Service
 @Transactional(readOnly = true)
 public class RunQueryService {
@@ -36,14 +39,14 @@ public class RunQueryService {
         return new RunHistoryPage(content);
     }
 
-    public RunWithMetrics detail(UUID runId, UUID userId) {
-        Run run = loadOwned(runId, userId);
+    public RunWithMetrics detail(UUID runId, UUID viewerId) {
+        Run run = loadAccessible(runId, viewerId);
         return new RunWithMetrics(run, metricsOrZero(run.id()));
     }
 
     /** @return the run's stored GPS points (ordered), for client-side polyline/GeoJSON rendering. */
-    public List<TrackPoint> trackPoints(UUID runId, UUID userId) {
-        loadOwned(runId, userId);
+    public List<TrackPoint> trackPoints(UUID runId, UUID viewerId) {
+        loadAccessible(runId, viewerId);
         return gpsPoints.findByRunId(runId);
     }
 
@@ -51,13 +54,16 @@ public class RunQueryService {
         return metricsStore.findByRunId(runId).orElse(RunMetrics.zero());
     }
 
-    private Run loadOwned(UUID runId, UUID userId) {
+    private Run loadAccessible(UUID runId, UUID viewerId) {
         Run run = runs.findById(runId)
                 .orElseThrow(() -> ResourceNotFoundException.of("Run", runId));
-        if (!run.isOwnedBy(userId)) {
-            throw new ForbiddenException("Run %s does not belong to the current user.".formatted(runId));
+        if (run.isOwnedBy(viewerId)) {
+            return run;
         }
-        return run;
+        if (run.status() == RunStatus.COMPLETED) {
+            return run;
+        }
+        throw new ForbiddenException("Run %s does not belong to the current user.".formatted(runId));
     }
 
     public record RunWithMetrics(Run run, RunMetrics metrics) {

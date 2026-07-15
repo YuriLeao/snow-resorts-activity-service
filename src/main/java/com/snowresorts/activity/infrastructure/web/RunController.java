@@ -77,12 +77,15 @@ public class RunController {
 
     @GetMapping
     public List<RunSummaryResponse> history(
+            @RequestParam(required = false) UUID userId,
             @RequestParam(required = false) LocalDate date,
             @RequestParam(required = false) UUID resortId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        UUID userId = SecurityUtils.requireCurrentUserId();
-        RunHistoryPage result = queryService.history(userId, date, resortId, page, size);
+        UUID callerId = SecurityUtils.requireCurrentUserId();
+        // Optional userId: friend's history (MVP trusts the client, same pattern as leaderboard friendIds).
+        UUID subjectId = userId != null ? userId : callerId;
+        RunHistoryPage result = queryService.history(subjectId, date, resortId, page, size);
         return result.content().stream().map(RunSummaryResponse::from).toList();
     }
 
