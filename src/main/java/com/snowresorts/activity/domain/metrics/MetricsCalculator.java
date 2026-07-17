@@ -94,7 +94,9 @@ public class MetricsCalculator {
         long durationSec = Duration.between(
                 points.get(0).recordedAt(), points.get(points.size() - 1).recordedAt()).getSeconds();
 
-        double maxSpeedKmh = maxReportedSpeed(points).orElse(maxSegmentSpeedKmh);
+        // Cap chip-reported speeds — a plausible lat/lng with a bogus speedKmh must not
+        // inflate max speed (and friend rankings) above the spike threshold.
+        double maxSpeedKmh = Math.max(maxSegmentSpeedKmh, maxPlausibleReportedSpeed(points));
         double avgSpeedKmh = durationSec > 0 ? (distanceM / durationSec) * 3.6 : 0.0;
         AltitudeStats altitudeStats = altitudeStats(points);
         double avgInclinationDeg = inclinationSegments > 0 ? inclinationSum / inclinationSegments : 0.0;
@@ -126,12 +128,15 @@ public class MetricsCalculator {
         return new AltitudeStats(max, verticalDropM);
     }
 
-    private static java.util.OptionalDouble maxReportedSpeed(List<TrackPoint> points) {
+    /** Highest chip-reported speed within the plausible ski range; 0 when none. */
+    private static double maxPlausibleReportedSpeed(List<TrackPoint> points) {
         return points.stream()
                 .map(TrackPoint::speedKmh)
                 .filter(java.util.Objects::nonNull)
                 .mapToDouble(Double::doubleValue)
-                .max();
+                .filter(speed -> speed > 0 && speed <= MAX_SPEED_KMH)
+                .max()
+                .orElse(0.0);
     }
 
     private static double secondsBetween(TrackPoint a, TrackPoint b) {

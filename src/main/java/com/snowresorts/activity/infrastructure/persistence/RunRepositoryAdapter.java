@@ -60,13 +60,23 @@ public class RunRepositoryAdapter implements Runs {
     }
 
     @Override
-    public List<LeaderboardEntry> leaderboard(Collection<UUID> userIds, Instant since) {
+    public List<LeaderboardEntry> leaderboard(Collection<UUID> userIds, Instant since, Instant until,
+                                              UUID resortId) {
         if (userIds == null || userIds.isEmpty()) {
             return List.of();
         }
-        return jpaRepository.aggregateLeaderboard(userIds, since).stream()
+        List<LeaderboardProjection> rows = resortId == null
+                ? jpaRepository.aggregateLeaderboard(userIds, since, until)
+                : jpaRepository.aggregateLeaderboardForResort(userIds, since, until, resortId);
+        return rows.stream()
                 .map(p -> new LeaderboardEntry(
-                        p.getUserId(), p.getMaxSpeedKmh(), p.getTotalDistanceM(), p.getRunCount()))
+                        p.getUserId(),
+                        p.getMaxSpeedKmh(),
+                        p.getTotalDistanceM(),
+                        p.getRunCount(),
+                        p.getTotalVerticalDropM(),
+                        p.getMaxInclinationDeg(),
+                        p.getTotalDurationSec()))
                 .toList();
     }
 

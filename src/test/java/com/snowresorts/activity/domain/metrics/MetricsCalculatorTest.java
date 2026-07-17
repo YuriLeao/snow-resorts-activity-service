@@ -46,12 +46,25 @@ class MetricsCalculatorTest {
         // Assert: two ~111.2 m segments -> ~222.4 m total (Haversine)
         assertThat(metrics.distanceM()).isCloseTo(222.39, within(1.0));
         assertThat(metrics.durationSec()).isEqualTo(20L);
-        assertThat(metrics.maxSpeedKmh()).isEqualTo(50.0); // max reported point speed
+        assertThat(metrics.maxSpeedKmh()).isEqualTo(50.0); // max of reported / segment speed
         assertThat(metrics.avgSpeedKmh()).isCloseTo(40.03, within(1.0));
         assertThat(metrics.verticalDropM()).isCloseTo(20.0, within(0.001));
         assertThat(metrics.maxAltitudeM()).isCloseTo(2000.0, within(0.001));
         assertThat(metrics.maxInclinationDeg()).isCloseTo(5.14, within(0.2));
         assertThat(metrics.avgInclinationDeg()).isCloseTo(5.14, within(0.2));
+    }
+
+    @Test
+    @DisplayName("calculate_implausibleReportedSpeed_ignoresItAndUsesSegment")
+    void calculate_implausibleReportedSpeed_ignoresItAndUsesSegment() {
+        List<TrackPoint> points = List.of(
+                new TrackPoint(T0, 45.000, 6.000, 2000.0, null),
+                new TrackPoint(T0.plusSeconds(10), 45.001, 6.000, 1990.0, 280.0));
+
+        RunMetrics metrics = calculator.calculate(points);
+
+        // 280 km/h chip reading is discarded; segment-derived ~40 km/h wins.
+        assertThat(metrics.maxSpeedKmh()).isCloseTo(40.03, within(1.0));
     }
 
     @Test

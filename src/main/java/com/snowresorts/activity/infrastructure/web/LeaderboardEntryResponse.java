@@ -8,10 +8,20 @@ public record LeaderboardEntryResponse(
         UUID userId,
         double maxSpeedKmh,
         double totalDistanceM,
-        long runCount) {
+        long runCount,
+        double totalVerticalDropM,
+        double maxInclinationDeg,
+        long totalDurationSec) {
 
     public static LeaderboardEntryResponse of(int rank, LeaderboardEntry entry) {
-        return new LeaderboardEntryResponse(rank, entry.userId(), entry.maxSpeedKmh(),
-                entry.totalDistanceM(), entry.runCount());
+        return new LeaderboardEntryResponse(
+                rank,
+                entry.userId(),
+                entry.maxSpeedKmh(),
+                entry.totalDistanceM(),
+                entry.runCount(),
+                entry.totalVerticalDropM(),
+                entry.maxInclinationDeg(),
+                entry.totalDurationSec());
     }
 }

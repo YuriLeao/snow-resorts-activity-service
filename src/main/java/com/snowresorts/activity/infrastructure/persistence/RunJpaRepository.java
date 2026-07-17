@@ -26,14 +26,41 @@ public interface RunJpaRepository extends JpaRepository<RunEntity, UUID> {
             SELECT r.user_id AS userId,
                    COALESCE(MAX(m.max_speed_kmh), 0) AS maxSpeedKmh,
                    COALESCE(SUM(m.distance_m), 0) AS totalDistanceM,
-                   COUNT(*) AS runCount
+                   COUNT(*) AS runCount,
+                   COALESCE(SUM(m.vertical_drop_m), 0) AS totalVerticalDropM,
+                   COALESCE(MAX(m.max_inclination_deg), 0) AS maxInclinationDeg,
+                   COALESCE(SUM(m.duration_sec), 0) AS totalDurationSec
             FROM activity.runs r
-            LEFT JOIN activity.run_metrics m ON m.run_id = r.id
+            INNER JOIN activity.run_metrics m ON m.run_id = r.id
             WHERE r.user_id IN (:userIds)
               AND r.status = 'COMPLETED'
               AND r.started_at >= :since
+              AND r.started_at < :until
             GROUP BY r.user_id
             """, nativeQuery = true)
     List<LeaderboardProjection> aggregateLeaderboard(@Param("userIds") Collection<UUID> userIds,
-                                                     @Param("since") Instant since);
+                                                     @Param("since") Instant since,
+                                                     @Param("until") Instant until);
+
+    @Query(value = """
+            SELECT r.user_id AS userId,
+                   COALESCE(MAX(m.max_speed_kmh), 0) AS maxSpeedKmh,
+                   COALESCE(SUM(m.distance_m), 0) AS totalDistanceM,
+                   COUNT(*) AS runCount,
+                   COALESCE(SUM(m.vertical_drop_m), 0) AS totalVerticalDropM,
+                   COALESCE(MAX(m.max_inclination_deg), 0) AS maxInclinationDeg,
+                   COALESCE(SUM(m.duration_sec), 0) AS totalDurationSec
+            FROM activity.runs r
+            INNER JOIN activity.run_metrics m ON m.run_id = r.id
+            WHERE r.user_id IN (:userIds)
+              AND r.status = 'COMPLETED'
+              AND r.started_at >= :since
+              AND r.started_at < :until
+              AND r.resort_id = :resortId
+            GROUP BY r.user_id
+            """, nativeQuery = true)
+    List<LeaderboardProjection> aggregateLeaderboardForResort(@Param("userIds") Collection<UUID> userIds,
+                                                              @Param("since") Instant since,
+                                                              @Param("until") Instant until,
+                                                              @Param("resortId") UUID resortId);
 }

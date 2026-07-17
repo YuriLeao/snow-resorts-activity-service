@@ -7,9 +7,8 @@ public record LeaderboardEntry(
         UUID userId,
         double maxSpeedKmh,
         double totalDistanceM,
-        long runCount) {
+        long runCount,
+        double totalVerticalDropM,
+        double maxInclinationDeg,
+        long totalDurationSec) {}
 
-    public static LeaderboardEntry empty(UUID userId) {
-        return new LeaderboardEntry(userId, 0, 0, 0L);
-    }
-}

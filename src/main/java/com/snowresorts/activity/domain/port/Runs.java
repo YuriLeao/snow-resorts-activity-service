@@ -22,9 +22,12 @@ public interface Runs {
     List<Run> findHistory(UUID userId, LocalDate date, UUID resortId, int page, int size);
 
     /**
-     * Aggregates COMPLETED runs since {@code since} for the given users, joined with their metrics.
+     * Aggregates COMPLETED runs with {@code started_at} in {@code [since, until)} for the given
+     * users, joined with their metrics. When {@code resortId} is non-null, only descents at that
+     * resort are included.
      *
      * @return one entry per user that has at least one qualifying run.
      */
-    List<LeaderboardEntry> leaderboard(Collection<UUID> userIds, Instant since);
+    List<LeaderboardEntry> leaderboard(Collection<UUID> userIds, Instant since, Instant until,
+                                       UUID resortId);
 }

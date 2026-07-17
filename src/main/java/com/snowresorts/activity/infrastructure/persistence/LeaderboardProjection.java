@@ -12,4 +12,10 @@ public interface LeaderboardProjection {
     double getTotalDistanceM();
 
     long getRunCount();
+
+    double getTotalVerticalDropM();
+
+    double getMaxInclinationDeg();
+
+    long getTotalDurationSec();
 }
