@@ -7,7 +7,7 @@ import com.snowresorts.activity.domain.model.TrackPoint;
 import com.snowresorts.activity.domain.port.GpsPoints;
 import com.snowresorts.activity.domain.port.RunMetricsStore;
 import com.snowresorts.activity.domain.port.Runs;
-import com.snowresorts.security.error.ForbiddenException;
+import com.snowresorts.activity.domain.port.UserAccess;
 import com.snowresorts.security.error.ResourceNotFoundException;
 import java.time.LocalDate;
 import java.util.List;
@@ -15,9 +15,10 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Read side (CQRS): run history, detail and replay. Own ACTIVE runs stay private; COMPLETED
- * runs are readable by any authenticated caller so friends can open a descent from the
- * friends screen (MVP — same trust model as leaderboard {@code friendIds}). */
+/**
+ * Read side (CQRS): run history, detail and replay. Non-owners may only access COMPLETED runs
+ * when user-service reports friendship + {@code shareStats} permission.
+ */
 @Service
 @Transactional(readOnly = true)
 public class RunQueryService {
@@ -25,15 +26,20 @@ public class RunQueryService {
     private final Runs runs;
     private final RunMetricsStore metricsStore;
     private final GpsPoints gpsPoints;
+    private final UserAccess userAccess;
 
-    public RunQueryService(Runs runs, RunMetricsStore metricsStore, GpsPoints gpsPoints) {
+    public RunQueryService(Runs runs, RunMetricsStore metricsStore, GpsPoints gpsPoints,
+                           UserAccess userAccess) {
         this.runs = runs;
         this.metricsStore = metricsStore;
         this.gpsPoints = gpsPoints;
+        this.userAccess = userAccess;
     }
 
-    public RunHistoryPage history(UUID userId, LocalDate date, UUID resortId, int page, int size) {
-        List<RunWithMetrics> content = runs.findHistory(userId, date, resortId, page, size).stream()
+    public RunHistoryPage history(UUID subjectUserId, UUID viewerId, LocalDate date, UUID resortId,
+                                  int page, int size) {
+        requireStatsAccess(viewerId, subjectUserId);
+        List<RunWithMetrics> content = runs.findHistory(subjectUserId, date, resortId, page, size).stream()
                 .map(run -> new RunWithMetrics(run, metricsOrZero(run.id())))
                 .toList();
         return new RunHistoryPage(content);
@@ -60,10 +66,17 @@ public class RunQueryService {
         if (run.isOwnedBy(viewerId)) {
             return run;
         }
-        if (run.status() == RunStatus.COMPLETED) {
+        if (run.status() == RunStatus.COMPLETED && userAccess.canViewStats(viewerId, run.userId())) {
             return run;
         }
-        throw new ForbiddenException("Run %s does not belong to the current user.".formatted(runId));
+        // 404 (not 403) to avoid confirming existence to unauthorized callers.
+        throw ResourceNotFoundException.of("Run", runId);
+    }
+
+    private void requireStatsAccess(UUID viewerId, UUID ownerId) {
+        if (!userAccess.canViewStats(viewerId, ownerId)) {
+            throw ResourceNotFoundException.of("Profile", ownerId);
+        }
     }
 
     public record RunWithMetrics(Run run, RunMetrics metrics) {

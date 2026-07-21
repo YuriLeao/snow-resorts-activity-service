@@ -22,6 +22,10 @@ spring:
     default-schema: activity
     create-schemas: true
     locations: classpath:db/migration
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
   security:
     oauth2:
       resourceserver:
@@ -31,6 +35,17 @@ spring:
 server:
   port: ${SERVER_PORT:8085}
   forward-headers-strategy: framework
+
+snow:
+  user-service:
+    base-url: ${USER_SERVICE_BASE_URL:http://localhost:8082}
+  internal-api:
+    secret: ${INTERNAL_API_SECRET:dev-internal-secret}
+    header: X-Internal-Secret
+  security:
+    cors:
+      allowed-origins:
+        - ${CORS_ALLOWED_ORIGIN:http://localhost:8080}
 
 management:
   endpoints:

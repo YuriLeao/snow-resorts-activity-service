@@ -91,6 +91,12 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
         <!-- Validates JWTs against the auth-service JWKS via the shared resource-server chain. -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

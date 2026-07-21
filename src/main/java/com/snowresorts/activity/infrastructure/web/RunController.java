@@ -83,9 +83,8 @@ public class RunController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         UUID callerId = SecurityUtils.requireCurrentUserId();
-        // Optional userId: friend's history (MVP trusts the client, same pattern as leaderboard friendIds).
         UUID subjectId = userId != null ? userId : callerId;
-        RunHistoryPage result = queryService.history(subjectId, date, resortId, page, size);
+        RunHistoryPage result = queryService.history(subjectId, callerId, date, resortId, page, size);
         return result.content().stream().map(RunSummaryResponse::from).toList();
     }
 

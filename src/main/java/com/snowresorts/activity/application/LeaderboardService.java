@@ -2,9 +2,9 @@ package com.snowresorts.activity.application;
 
 import com.snowresorts.activity.domain.model.LeaderboardEntry;
 import com.snowresorts.activity.domain.port.Runs;
+import com.snowresorts.activity.domain.port.UserAccess;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -17,39 +17,33 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Friend-leaderboard read model. Friend ids are supplied by the client (sourced from user-service)
- * for the MVP; the caller is always included. Only users with completed descents in the period are
- * ranked. Calendar windows (today / year) use the caller's device timezone. Default ordering: max
- * speed, then distance, then runs (client re-sorts by selected metric).
- *
- * <p>This is the CQRS read path; in production it is fronted by a Redis cache (TTL ~60s).
+ * Friend-leaderboard read model. Friend ids are resolved server-side from user-service;
+ * client-supplied friend ids are ignored. The caller is always included. Only users with
+ * completed descents in the period are ranked.
  */
 @Service
 @Transactional(readOnly = true)
 public class LeaderboardService {
 
     private final Runs runs;
+    private final UserAccess userAccess;
 
-    public LeaderboardService(Runs runs) {
+    public LeaderboardService(Runs runs, UserAccess userAccess) {
         this.runs = runs;
+        this.userAccess = userAccess;
     }
 
-    public List<LeaderboardEntry> friendsLeaderboard(UUID selfUserId, Collection<UUID> friendIds,
-                                                     LeaderboardPeriod period, UUID resortId,
-                                                     ZoneId timeZone, Instant now) {
+    public List<LeaderboardEntry> friendsLeaderboard(UUID selfUserId, LeaderboardPeriod period,
+                                                     UUID resortId, ZoneId timeZone, Instant now) {
         Set<UUID> participants = new LinkedHashSet<>();
         participants.add(selfUserId);
-        if (friendIds != null) {
-            participants.addAll(friendIds);
-        }
+        participants.addAll(userAccess.listAcceptedFriendIds(selfUserId));
 
         Instant since = period.since(now, timeZone);
         Instant until = period.untilExclusive(now, timeZone);
         Map<UUID, LeaderboardEntry> byUser = runs.leaderboard(participants, since, until, resortId).stream()
                 .collect(Collectors.toMap(LeaderboardEntry::userId, Function.identity()));
 
-        // Only rank users who completed at least one descent in the window — avoids
-        // a zero-filled list when someone has hundreds of friends.
         return participants.stream()
                 .map(byUser::get)
                 .filter(entry -> entry != null)

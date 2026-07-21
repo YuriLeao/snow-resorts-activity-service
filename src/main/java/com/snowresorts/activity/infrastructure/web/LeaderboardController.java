@@ -23,22 +23,19 @@ public class LeaderboardController {
     }
 
     /**
-     * Ranks the caller plus the supplied friend ids for the period. {@code friendIds} comes from the
-     * client (sourced from user-service) for the MVP; {@code period} is
-     * {@code today|week|season|year|all}.
+     * Ranks the caller plus their accepted friends for the period. Friend ids are resolved
+     * server-side from user-service. {@code period} is {@code today|week|season|year|all}.
      * Optional {@code resortId} limits the ranking to descents at that resort.
-     * {@code timeZone} is the caller's IANA zone (from the phone) so today/year match their calendar.
+     * {@code timeZone} is the caller's IANA zone.
      */
     @GetMapping("/friends")
     public List<LeaderboardEntryResponse> friends(
             @RequestParam(required = false) String period,
-            @RequestParam(required = false) List<UUID> friendIds,
             @RequestParam(required = false) UUID resortId,
             @RequestParam(required = false) String timeZone) {
         UUID userId = SecurityUtils.requireCurrentUserId();
         List<LeaderboardEntry> ranking = leaderboardService.friendsLeaderboard(
                 userId,
-                friendIds,
                 LeaderboardPeriod.fromParam(period),
                 resortId,
                 LeaderboardPeriod.resolveZone(timeZone),
