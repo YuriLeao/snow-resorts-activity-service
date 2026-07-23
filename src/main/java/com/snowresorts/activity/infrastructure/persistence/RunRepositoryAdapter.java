@@ -17,6 +17,9 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class RunRepositoryAdapter implements Runs {
 
+    private static final int DEFAULT_HISTORY_PAGE_SIZE = 20;
+    private static final int MAX_HISTORY_PAGE_SIZE = 100;
+
     private final RunJpaRepository jpaRepository;
 
     public RunRepositoryAdapter(RunJpaRepository jpaRepository) {
@@ -41,7 +44,8 @@ public class RunRepositoryAdapter implements Runs {
 
     @Override
     public List<Run> findHistory(UUID userId, LocalDate date, UUID resortId, int page, int size) {
-        Pageable pageable = PageRequest.of(Math.max(page, 0), size <= 0 ? 20 : size);
+        int pageSize = size <= 0 ? DEFAULT_HISTORY_PAGE_SIZE : Math.min(size, MAX_HISTORY_PAGE_SIZE);
+        Pageable pageable = PageRequest.of(Math.max(page, 0), pageSize);
         org.springframework.data.domain.Slice<RunEntity> result;
         if (date != null) {
             Instant from = date.atStartOfDay(ZoneOffset.UTC).toInstant();
