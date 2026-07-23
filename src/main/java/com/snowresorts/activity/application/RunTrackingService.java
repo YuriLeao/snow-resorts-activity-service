@@ -13,6 +13,7 @@ import com.snowresorts.contracts.events.RunCompletedEvent;
 import com.snowresorts.security.error.ConflictException;
 import com.snowresorts.security.error.ForbiddenException;
 import com.snowresorts.security.error.ResourceNotFoundException;
+import com.snowresorts.security.logging.StructuredLogger;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -47,7 +48,8 @@ public class RunTrackingService {
         Instant start = startedAt != null ? startedAt : Instant.now();
         Run run = new Run(UUID.randomUUID(), userId, resortId, trailId, start, null, RunStatus.ACTIVE);
         Run saved = runs.save(run);
-        log.debug("Started run {} for user {}", saved.id(), userId);
+        StructuredLogger.of(log).debug("run_start", "succeeded", "created",
+                "run_id", saved.id(), "user_id", userId);
         return saved;
     }
 
@@ -61,7 +63,8 @@ public class RunTrackingService {
         List<TrackPoint> cleaned = metricsCalculator.clean(points);
         gpsPoints.appendAll(runId, cleaned);
         int rejected = points.size() - cleaned.size();
-        log.debug("Appended {} points ({} rejected as spikes) to run {}", cleaned.size(), rejected, runId);
+        StructuredLogger.of(log).debug("run_append", "succeeded", "ok",
+                "run_id", runId, "accepted", cleaned.size(), "rejected", rejected);
         return new AppendResult(cleaned.size(), rejected);
     }
 
@@ -88,8 +91,10 @@ public class RunTrackingService {
                 UUID.randomUUID(), Instant.now(), runId, userId, run.resortId(),
                 metrics.maxSpeedKmh(), metrics.distanceM(), metrics.durationSec()));
 
-        log.debug("Finished run {}: distance={}m maxSpeed={}km/h", runId,
-                metrics.distanceM(), metrics.maxSpeedKmh());
+        StructuredLogger.of(log).debug("run_finish", "succeeded", "ok",
+                "run_id", runId,
+                "distance_m", metrics.distanceM(),
+                "max_speed_kmh", metrics.maxSpeedKmh());
         return metrics;
     }
 
@@ -98,7 +103,8 @@ public class RunTrackingService {
     public void delete(UUID runId, UUID userId) {
         loadOwned(runId, userId);
         runs.deleteById(runId);
-        log.debug("Deleted run {} for user {}", runId, userId);
+        StructuredLogger.of(log).debug("run_delete", "succeeded", "ok",
+                "run_id", runId, "user_id", userId);
     }
 
     private Run loadOwned(UUID runId, UUID userId) {

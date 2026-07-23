@@ -2,6 +2,7 @@ package com.snowresorts.activity.infrastructure.user;
 
 import com.snowresorts.activity.application.InternalApiProperties;
 import com.snowresorts.activity.domain.port.UserAccess;
+import com.snowresorts.security.logging.StructuredLogger;
 import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -41,8 +42,10 @@ public class RestUserAccessAdapter implements UserAccess {
                     .body(StatsAccessResponse.class);
             return response != null && response.allowed();
         } catch (Exception ex) {
-            log.warn("Stats access check failed for viewer {} owner {}: {}",
-                    viewerId, ownerId, ex.getMessage());
+            StructuredLogger.of(log).warn("stats_access_check", "failed", "user_service_error",
+                    "viewer_id", viewerId,
+                    "owner_id", ownerId,
+                    "detail", ex.getMessage());
             return false;
         }
     }
@@ -60,7 +63,9 @@ public class RestUserAccessAdapter implements UserAccess {
             }
             return response.friendIds();
         } catch (Exception ex) {
-            log.warn("Failed to load friend ids for {}: {}", userId, ex.getMessage());
+            StructuredLogger.of(log).warn("friend_ids_lookup", "failed", "user_service_error",
+                    "user_id", userId,
+                    "detail", ex.getMessage());
             return List.of();
         }
     }

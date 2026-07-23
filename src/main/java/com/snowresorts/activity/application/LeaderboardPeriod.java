@@ -1,5 +1,6 @@
 package com.snowresorts.activity.application;
 
+import com.snowresorts.security.logging.StructuredLogger;
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -56,7 +57,8 @@ public enum LeaderboardPeriod {
         try {
             return ZoneId.of(timeZone.trim());
         } catch (DateTimeException ex) {
-            log.warn("Unknown leaderboard timeZone '{}', falling back to UTC", timeZone);
+            StructuredLogger.of(log).warn("leaderboard_timezone", "accepted", "unknown_zone",
+                    "time_zone", timeZone);
             return FALLBACK_ZONE;
         }
     }
